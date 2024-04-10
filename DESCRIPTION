@@ -1,12 +1,16 @@
 Package: crrf
-Title: What the Package Does (One Line, Title Case)
+Title: Firth Penalized Competing Risks Regression with Fine Gray Model
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Authors@R: c(
+    person(given="Anna Eames", family="Seffernick", email="anna.seffernick@stjude.org", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0848-4604")),
+           person(given="Stanley", family="Pounds", email="stanley.pounds@stjude.org", role = c("aut"),
+           comment = c(ORCID = "0000-0002-9167-2114")))
+Description: This package fits the Firth-penalized Fine Gray model for competing risks data. This method allows for estimation in the case of monotone likelihood, which can occur in competing risks problems when the sample size is small, the event rate is low, or heavy censoring. The code is based on the finegray method in the Survival package and uses the optimization function nlminb from the stats package.
+License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
+Imports:
+  survival,
+  stats

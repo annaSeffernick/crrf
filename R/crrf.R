@@ -1,7 +1,30 @@
-##################################
-# Fine-Gray model
-
-crrf <- function(form,etype,dset,firth=F,CI=F,alpha=0.05,eps=1e-10,
+#' Firth-penalized Fine Gray model
+#'
+#' @param form     A formula with the survival model, with usual survival package syntax for the time to event data: Surv(time, event) notation. Values must be column names in dset.
+#' @param etype    A character to indicate event type of interest, as defined by the event indicator in dset.
+#' @param dset     A data.frame including the survival variables defined in the formula and any additional covariates to include in the model.
+#' @param firth    A Boolean of whether to fit with Firth penalty. Default is TRUE.
+#' @param CI       A Boolean of whether or not to compute the (penalized) partial profile likelihood confidence intervals. Default is FALSE.
+#' @param alpha    A numeric of significance level. Default is 0.05.
+#' @param eps      A numeric of threshold to begin confidence interval calculations. Default is eps=1e-10. Not recommended to decrease, as this may lead to errors in calculating the Firth Penalty.
+#' @param CI.print A Boolean of whether to print the CI calculations for each variable while calculating to monitor progress. Default is FALSE.
+#'
+#' @return A crrf object, with a list of output, including a table with estimates and CI intervals if calculated and the output from nlminb optimization.
+#' @import stats
+#' @import survival
+#' @export
+#'
+#' @examples
+#' set.seed(12345)
+#' n=100
+#' tm=rexp(n)
+#' ev=factor(rbinom(n,2,0.3))
+#' x=rnorm(n)
+#' y=rbinom(n,1,0.5)
+#' u=runif(n)
+#' dset=cbind.data.frame(tm=tm,ev=ev,x=x,y=y,u=u)
+#' fgm.res=crrf(Surv(tm,ev)~x+y+u,etype="1",dset,firth=TRUE,CI=FALSE)
+crrf <- function(form,etype,dset,firth=TRUE,CI=FALSE,alpha=0.05,eps=1e-10,
                  CI.print=F){
   fg.res <- maxlogL.fg(form,etype,dset,firth=firth)
   CI.tbl <- NULL
@@ -20,7 +43,7 @@ crrf <- function(form,etype,dset,firth=F,CI=F,alpha=0.05,eps=1e-10,
   }
 
   res <- list(CI.tbl=CI.tbl,fg.res=fg.res)
-
+  class(res) <- "crrf"
   return(res)
 
 }
@@ -266,7 +289,7 @@ fg.coxph <- function(form,etype,data,init,control=survival::coxph.control())
 
   fg.res <- survival::coxph(new.form,        # formula in Fine-Gray format for coxph
                             data=fgdat,      # data in Fine-Gray format for coxph
-                            weight= fgwt,    # Fine-Gray weights for coxph
+                            weight=fgdat$fgwt,    # Fine-Gray weights for coxph
                             init=init,       # specified initial values for beta
                             control=control) # controls for iterative optimization
 
