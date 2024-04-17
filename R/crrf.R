@@ -42,9 +42,14 @@ crrf <- function(form,etype,dset,firth=TRUE,CI=FALSE,alpha=0.05,eps=1e-10,
     }
   }
 
-  res <- list(CI.tbl=CI.tbl,fg.res=fg.res)
-  class(res) <- "crrf"
-  return(res)
+  fit <- list(coefficients=fg.res$beta,
+              alpha=alpha, eps=eps, firth=fg.res$firth, etype=fg.res$etype,
+              loglik=-1*fg.res$nlogL, iter=fg.res$iterations,
+              conv=ifelse(fg.res$convergence==0, TRUE, FALSE),
+              formula=fg.res$form, call=match.call(),
+              CI.tbl=CI.tbl,fg.res=fg.res)
+  class(fit) <- "crrf"
+  return(fit)
 
 }
 
