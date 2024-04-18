@@ -2,7 +2,7 @@
 % Please edit documentation in R/crrf.R
 \name{crrf}
 \alias{crrf}
-\title{Firth-penalized Fine Gray model}
+\title{Fine-Gray Competing Risks Regression with Firth Penalty}
 \usage{
 crrf(
   form,
@@ -36,7 +36,7 @@ crrf(
 A crrf object, with a list of output, including a table with estimates and CI intervals if calculated and the output from nlminb optimization.
 }
 \description{
-Firth-penalized Fine Gray model
+Fine-Gray Competing Risks Regression with Firth Penalty
 }
 \examples{
 set.seed(12345)

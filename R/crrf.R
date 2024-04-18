@@ -1,4 +1,4 @@
-#' Firth-penalized Fine Gray model
+#' Fine-Gray Competing Risks Regression with Firth Penalty
 #'
 #' @param form     A formula with the survival model, with usual survival package syntax for the time to event data: Surv(time, event) notation. Values must be column names in dset.
 #' @param etype    A character to indicate event type of interest, as defined by the event indicator in dset.
