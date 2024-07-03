@@ -14,3 +14,6 @@ RoxygenNote: 7.2.3
 Imports:
   survival,
   stats
+Depends: 
+    R (>= 2.10)
+LazyData: true
