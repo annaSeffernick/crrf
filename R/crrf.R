@@ -35,10 +35,17 @@ crrf <- function(form,etype,dset,firth=TRUE,CI=FALSE,alpha=0.05,eps=1e-10,
     CI.clm <- c("ml.beta","lower","upper")
     colnames(CI.tbl) <- CI.clm
     rownames(CI.tbl) <- names(beta)
-    for(i in 1:k){
-      ci.res <- one.cb.fg(fg.res,i,alpha,eps)
+    if(k==1){
+      ci.res <- single.cb.fg(fg.res, alpha, eps)
       if(CI.print){print(ci.res)}
-      CI.tbl[i,1:3] <- ci.res[1:3]
+      CI.tbl[1,1:3] <- ci.res[1:3]
+    }
+    else{
+      for(i in 1:k){
+        ci.res <- one.cb.fg(fg.res,i,alpha,eps)
+        if(CI.print){print(ci.res)}
+        CI.tbl[i,1:3] <- ci.res[1:3]
+      }
     }
   }
 
@@ -53,16 +60,89 @@ crrf <- function(form,etype,dset,firth=TRUE,CI=FALSE,alpha=0.05,eps=1e-10,
 
 }
 
+#########################################################
+# find confidence bound when only one variable in the model
+
+single.cb.fg <- function(ml.res,      # result of maxlogL.fg
+                         alpha=0.05,  # alpha for confidence bound
+                         eps=1e-10,   # small value used to set lb and ub
+                         n.iter=10)   # number of iterations to try modifying eps when produces error computing firth penalty
+{
+  beta <- ml.res$beta      # extract beta of interest
+  theta <- exp(beta)/(1+exp(beta)) # transform to unit scale
+  delta <- stats::qchisq(1-alpha,1)/2
+
+  # uniroot for lower bound on unit scale
+  lb0 <- eps  # lower limit to test for lower CI bound
+  for(i in 1:n.iter){
+    nlogL.lb0 <- try(nlogL.fg(lb0,ml.res$dset, ml.res$form, ml.res$etype,ml.res$firth, unit.scale=TRUE), silent=TRUE) # test if profile penalized likelihood can be calculated
+    if(inherits(nlogL.lb0, "try-error")){
+      lb0 <- 10*lb0 # if profile penalized likelihood cannot be calculated, increase lower limit
+    }
+  }
+  lb1 <- theta # MLE - upper limit
+
+  root.lb <- stats::uniroot(nlogL.dif, c(lb0, lb1),
+                            ml.res=ml.res, alpha=alpha, unit.scale=TRUE)$root # find the root
+  cilb <- log(root.lb)-log(1-root.lb) # convert back to original scale
+  cilb.nlogL <- nlogL.fg(root.lb,ml.res$dset, ml.res$form, ml.res$etype,ml.res$firth, unit.scale=TRUE) # save profile penalized negative log likelihood at confidence bound
+
+  # uniroot for upper bound on unit scale
+  ub0 <- theta # MLE - lower limit
+  ub1 <- 1-eps # upper limit to test for upper CI bound
+  for(i in 1:n.iter){
+    nlogL.ub1 <- try(nlogL.fg(ub1,ml.res$dset, ml.res$form, ml.res$etype,ml.res$firth, unit.scale=TRUE), silent=TRUE) # test if profile penalized likelihood can be caluclated
+    if(inherits(nlogL.ub1, "try-error")){
+      ub1 <- 1-10*(1-ub1) # if profile penalized likelihood cannot be caluclated, decrease upper limit
+    }
+  }
+
+  root.ub <- stats::uniroot(nlogL.dif, c(ub0, ub1),
+                            ml.res=ml.res, alpha=alpha, unit.scale=TRUE)$root # find root
+  ciub <- log(root.ub)-log(1-root.ub) # convert back to original scale
+  ciub.nlogL <- nlogL.fg(root.ub,ml.res$dset, ml.res$form, ml.res$etype,ml.res$firth, unit.scale=TRUE) # save profile penalized negative log likelihood at confidence bound
+
+  # organize output
+  res <- c(ml.beta=beta,
+           lower=cilb,
+           upper=ciub,
+           ml.nlogL=ml.res$nlogL,
+           lb.nlogL=cilb.nlogL,
+           ub.nlogL=ciub.nlogL,
+           delta=delta,
+           alpha=alpha)
+
+  return(res)
 
 
-##################################
-# find confidence bound for one parameter
+}
+
+#################################
+# Difference in likelihood CI function to find root
+nlogL.dif <- function(beta,    # a scalar
+                      ml.res,  # result of maxlogL.fg
+                      alpha,    # confidence limit
+                      unit.scale)  # indicates whetehr beta has been transformed to the unit scale
+{
+  beta.ml <- ml.res$beta      # extract beta of interest
+  theta.ml <- exp(beta)/(1+exp(beta)) # transform to unit scale
+  delta <- stats::qchisq(1-alpha,1)/2     # delta for CI calculation
+  best.nlogL <- ml.res$nlogL
+  nlogL.line <- best.nlogL+delta
+  nlogL.temp <- nlogL.fg(beta,ml.res$dset, ml.res$form, ml.res$etype,ml.res$firth, unit.scale = unit.scale)
+  res <- nlogL.temp - nlogL.line
+  return(res)
+}
+
+
+##########################################################
+# find confidence bound for one of multiple variables
 
 one.cb.fg <- function(ml.res,      # result of maxlogL.fg
-                   index,       # index of parameter to compute bounds for
-                   alpha=0.05,  # alpha for confidence bound
-                   eps=1e-10,   # small value used to set lb and ub
-                   n.iter=10)   # number of iterations to try modifying eps when produces error computing firth penalty
+                      index,       # index of parameter to compute bounds for
+                      alpha=0.05,  # alpha for confidence bound
+                      eps=1e-10,   # small value used to set lb and ub
+                      n.iter=10)   # number of iterations to try modifying eps when produces error computing firth penalty
 {
   beta <- ml.res$beta[index]      # extract beta of interest
   theta <- exp(beta)/(1+exp(beta)) # transform to unit scale
@@ -79,7 +159,7 @@ one.cb.fg <- function(ml.res,      # result of maxlogL.fg
   lb1 <- theta # MLE - upper limit
 
   root.lb <- stats::uniroot(profile.dif, c(lb0, lb1), index=index,
-                     ml.res=ml.res, alpha=alpha)$root # find the root
+                            ml.res=ml.res, alpha=alpha)$root # find the root
   cilb <- log(root.lb)-log(1-root.lb) # convert back to original scale
   cilb.nlogL <- profile.nlogL.fg(root.lb,index,ml.res,T) # save profile penalized negative log likelihood at confidence bound
 
@@ -94,7 +174,7 @@ one.cb.fg <- function(ml.res,      # result of maxlogL.fg
   }
 
   root.ub <- stats::uniroot(profile.dif, c(ub0, ub1), index=index,
-                     ml.res=ml.res, alpha=alpha)$root # find root
+                            ml.res=ml.res, alpha=alpha)$root # find root
   ciub <- log(root.ub)-log(1-root.ub) # convert back to original scale
   ciub.nlogL <- profile.nlogL.fg(root.ub,index,ml.res,T) # save profile penalized negative log likelihood at confidence bound
 
@@ -115,6 +195,7 @@ one.cb.fg <- function(ml.res,      # result of maxlogL.fg
 
 #################################
 # Profile likelihood CI function to find root
+
 profile.dif <- function(beta,    # a scalar
                         index,   # the index of the beta in the result
                         ml.res,  # result of maxlogL.fg
@@ -144,7 +225,11 @@ profile.nlogL.fg <- function(beta,         # a scalar
   }
 
   all.beta <- ml.res$beta
-  oth.beta <- all.beta[-index]
+  oth.beta <- NULL
+  if(length(all.beta) > 1){
+    oth.beta <- all.beta[-index]
+  }
+
 
   ml.res <- maxlogL.fg(ml.res$form,
                        ml.res$etype,
@@ -216,8 +301,14 @@ nlogL.fg <- function(beta,            # vector of coefficients allowed to vary i
                      etype,           # event of interest
                      firth=F,         # indicates whether to add a Firth penalty term
                      fix.beta=NULL,   # scalar or vector for a coefficient to fix for confidence interval calculation
-                     fix.index=NULL)  # indices of fixed coefficients
+                     fix.index=NULL,  # indices of fixed coefficients
+                     unit.scale=F)    # indicates whether beta has been transformed to be on the unit scale
 {
+  if (unit.scale){
+    beta <- log(beta)-log(1-beta)
+  }
+
+
   # construct the beta vector
   new.beta <- construct.beta(beta,fix.beta,fix.index)                              # initialize as beta
 
