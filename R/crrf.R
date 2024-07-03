@@ -1,7 +1,7 @@
 #' Fine-Gray Competing Risks Regression with Firth Penalty
 #'
 #' @param form     A formula with the survival model, with usual survival package syntax for the time to event data: Surv(time, event) notation. Values must be column names in dset.
-#' @param etype    A character to indicate event type of interest, as defined by the event indicator in dset.
+#' @param etype    A character to indicate event type of interest, as defined by the event indicator in dset. This event indicator should be a factor with the first level corresponding to censoring!
 #' @param dset     A data.frame including the survival variables defined in the formula and any additional covariates to include in the model.
 #' @param firth    A Boolean of whether to fit with Firth penalty. Default is TRUE.
 #' @param CI       A Boolean of whether or not to compute the (penalized) partial profile likelihood confidence intervals. Default is FALSE.

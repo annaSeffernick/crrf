@@ -18,7 +18,7 @@ crrf(
 \arguments{
 \item{form}{A formula with the survival model, with usual survival package syntax for the time to event data: Surv(time, event) notation. Values must be column names in dset.}
 
-\item{etype}{A character to indicate event type of interest, as defined by the event indicator in dset.}
+\item{etype}{A character to indicate event type of interest, as defined by the event indicator in dset. This event indicator should be a factor with the first level corresponding to censoring!}
 
 \item{dset}{A data.frame including the survival variables defined in the formula and any additional covariates to include in the model.}
 
