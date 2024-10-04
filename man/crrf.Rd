@@ -12,7 +12,7 @@ crrf(
   CI = FALSE,
   alpha = 0.05,
   eps = 1e-10,
-  CI.print = F
+  CI.print = FALSE
 )
 }
 \arguments{

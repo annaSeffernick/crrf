@@ -28,13 +28,21 @@ crrftest <- function(form, etype, dset, test=~1,
                      firth=TRUE, alpha=0.05, eps=1e-10)
 {
   # Extract full model covs
-  cov1.name <- unlist(strsplit(as.character(form)[3], "[+]"))
-  cov1.name <- trimws(cov1.name)
-  # check models are nested
-  form2 <- as.formula(paste(as.character(form)[2],
-                            as.character(test)[2], sep="~"))
-  cov2.name <- unlist(strsplit(as.character(test)[2], "[+]"))
-  cov2.name <- trimws(cov2.name)
+  # cov1.name <- unlist(strsplit(as.character(form)[3], "[+]"))
+  # cov1.name <- trimws(cov1.name)
+  # # check models are nested
+  # form2 <- as.formula(paste(as.character(form)[2],
+  #                           as.character(test)[2], sep="~"))
+  # cov2.name <- unlist(strsplit(as.character(test)[2], "[+]"))
+  # cov2.name <- trimws(cov2.name)
+
+  cov1.name <- formula.tools::get.vars(form[[3]])
+  cov2.name <- formula.tools::get.vars(test)
+  if(length(cov2.name)==0){
+    cov2.name <- 1
+  }
+  form2 <- stats::reformulate(termlabels=cov2.name, response=form[[2]])
+
   if(!all(cov2.name %in% cov1.name)&&(cov2.name !=1))
     stop("test formula is not a subset of whole formula!")
   # If nested, fit full model

@@ -12,6 +12,7 @@
 #' @return A crrf object, with a list of output, including a table with estimates and CI intervals if calculated and the output from nlminb optimization.
 #' @import stats
 #' @import survival
+#' @import formula.tools
 #' @export
 #'
 #' @examples
@@ -25,7 +26,7 @@
 #' dset=cbind.data.frame(tm=tm,ev=ev,x=x,y=y,u=u)
 #' fgm.res=crrf(Surv(tm,ev)~x+y+u,etype="1",dset,firth=TRUE,CI=FALSE)
 crrf <- function(form,etype,dset,firth=TRUE,CI=FALSE,alpha=0.05,eps=1e-10,
-                 CI.print=F){
+                 CI.print=FALSE){
   fg.res <- maxlogL.fg(form,etype,dset,firth=firth)
   CI.tbl <- NULL
   if(CI){
@@ -375,13 +376,13 @@ firth.penalty <- function(fg.res,firth=F)
 fg.coxph <- function(form,etype,data,init,control=survival::coxph.control())
 {
   # prepare data to use coxph to fit Fine-Gray model
-  split.form <- unlist(strsplit(as.character(form), split="~"))
-  fg.form <- stats::as.formula(paste0(split.form[2],"~."))
+  fg.form <- stats::reformulate(termlabels=".", response=form[[2]])
   fgdat <- survival::finegray(fg.form,etype=etype,data=data)
 
   # prepare formula for Fine-Gray model
-  split.form <- unlist(strsplit(as.character(form), split="~"))
-  new.form <- stats::as.formula(paste0("Surv(fgstart, fgstop, fgstatus)~",split.form[3]))
+  form.vars <- formula.tools::get.vars(form[[3]])
+  new.form <- stats::reformulate(termlabels = form.vars,
+                                 response="Surv(fgstart, fgstop, fgstatus)")
 
   fg.res <- survival::coxph(new.form,        # formula in Fine-Gray format for coxph
                             data=fgdat,      # data in Fine-Gray format for coxph
