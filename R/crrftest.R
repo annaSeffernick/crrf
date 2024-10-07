@@ -39,7 +39,7 @@ crrftest <- function(form, etype, dset, test=~1,
   cov1.name <- formula.tools::get.vars(form[[3]])
   cov2.name <- formula.tools::get.vars(test)
   if(length(cov2.name)==0){
-    cov2.name <- 1
+    cov2.name <- "1"
   }
   form2 <- stats::reformulate(termlabels=cov2.name, response=form[[2]])
 
@@ -52,7 +52,8 @@ crrftest <- function(form, etype, dset, test=~1,
   if(length(cov2.name)==1 && cov2.name==1){
     intcpt <- rep(1, times=nrow(dset))
     dset2 <- cbind.data.frame(dset, intcpt)
-    form2.m <- as.formula(paste(as.character(form2)[2], "intcpt", sep="~"))
+    #form2.m <- as.formula(paste(as.character(form2)[2], "intcpt", sep="~"))
+    form2.m <- stats::reformulate(termlabels="intcpt", response=form[[2]])
     fgdat <- survival::finegray(form2.m, data=dset2, etype=etype)
     red <- survival::coxph(Surv(fgstart, fgstop, fgstatus)~intcpt, weight=fgdat$fgwt, data=fgdat)
     loglik.vec <- c(full$loglik, red$loglik[2])
