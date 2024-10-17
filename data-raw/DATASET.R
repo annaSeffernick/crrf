@@ -49,6 +49,6 @@ colnames(act.dat) <- c("Onco_Case", "Sentrix_ID", "Gender",
                        "ATRX_Mutation_Category",
                        "X11p15_status", "Methylation_Group",
                        "RFS", "RFS_status")
-
+act.dat$Stage[which(act.dat$Stage=="III ")] <- "III"
 
 usethis::use_data(act.dat, overwrite = TRUE)
